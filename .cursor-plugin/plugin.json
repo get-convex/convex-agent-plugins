@@ -4,9 +4,9 @@
   "description": "Official Convex plugin for Cursor - reactive backend development with TypeScript, including rules, skills, MCP integration, and automation hooks",
   "author": {
     "name": "Convex",
-    "email": "support@convex.dev",
-    "url": "https://convex.dev"
+    "email": "support@convex.dev"
   },
+  "logo": "assets/logo.png",
   "keywords": [
     "convex",
     "backend",
@@ -16,6 +16,5 @@
     "reactive",
     "serverless"
   ],
-  "logo": "https://convex.dev/logo.svg",
-  "primaryColor": "#F24E1E"
+  "hooks": "hooks.json"
 }
