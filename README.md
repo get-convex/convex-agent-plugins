@@ -2,7 +2,7 @@
 
 Official Convex plugins for AI coding agents, providing comprehensive development tools for building reactive backends with TypeScript.
 
-**Supported Agents:** Cursor, Claude Code (more coming soon)
+**Supported Agents:** Claude Code (more coming soon)
 
 ## Overview
 
