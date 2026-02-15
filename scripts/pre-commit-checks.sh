@@ -3,10 +3,6 @@
 # beforeShellExecution hook for git commit checks.
 # Returns JSON only on stdout.
 
-log() {
-  printf '[pre-commit-checks] %s\n' "$*" >&2
-}
-
 ltrim() {
   local value="$1"
   value="${value#"${value%%[![:space:]]*}"}"
@@ -93,7 +89,6 @@ json_get_first_array_string() {
 }
 
 allow() {
-  log "allow"
   printf '%s\n' '{"permission":"allow"}'
   exit 0
 }
@@ -101,14 +96,12 @@ allow() {
 deny() {
   local user_message="$1"
   local agent_message="$2"
-  log "deny: ${user_message}"
   printf '%s\n' "{\"permission\":\"deny\",\"user_message\":\"${user_message}\",\"agent_message\":\"${agent_message}\"}"
   exit 0
 }
 
 HOOK_INPUT="$(cat)"
 if [ -z "$HOOK_INPUT" ]; then
-  log "empty hook input"
   allow
 fi
 
@@ -122,15 +115,8 @@ if [ -z "$HOOK_CWD" ]; then
   HOOK_CWD="$(pwd -P 2>/dev/null || pwd)"
 fi
 
-log "cwd=${HOOK_CWD}"
-if [ -n "$WORKSPACE_ROOT" ]; then
-  log "workspace_root=${WORKSPACE_ROOT}"
-fi
-log "command=${COMMAND}"
-
 # Extra safety guard beyond matcher.
 if [[ ! "$COMMAND" =~ (^|[[:space:]])git[[:space:]]+commit($|[[:space:]]) ]]; then
-  log "not a git commit command"
   allow
 fi
 
@@ -143,13 +129,11 @@ if [ -z "$REPO_ROOT" ] && [ -d "${SCRIPT_DIR}/../.git" ]; then
   REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 fi
 if [ -z "$REPO_ROOT" ]; then
-  log "unable to determine repo root"
   allow
 fi
 
 CONVEX_DIR="${REPO_ROOT}/convex"
 if [ ! -d "$CONVEX_DIR" ]; then
-  log "no convex directory at ${CONVEX_DIR}"
   allow
 fi
 
@@ -160,7 +144,6 @@ DATE_NOW_IN_QUERIES="$(
     | grep "Date\.now()" || true
 )"
 if [ -n "$DATE_NOW_IN_QUERIES" ]; then
-  log "detected Date.now() in/near query"
   deny \
     "Commit blocked: found Date.now() inside/near Convex query functions." \
     "beforeShellExecution blocked this git commit because Date.now() was detected near query({}) in convex/. Queries should be deterministic for reactivity. Use server-generated timestamps in writes or pass time as an argument."
@@ -171,11 +154,8 @@ FILTER_ON_QUERIES="$(
   grep -r "\.query(.*)\s*\.filter(" "$CONVEX_DIR"/ --include="*.ts" --include="*.js" || true
 )"
 if [ -n "$FILTER_ON_QUERIES" ]; then
-  log "detected .filter() on db.query()"
   deny \
     "Commit blocked: found .filter() on Convex db.query() calls." \
     "beforeShellExecution blocked this git commit because .filter() was detected on db.query() in convex/. Prefer indexed access patterns such as .withIndex() for performance and correctness."
 fi
-
-log "no blocking issues found"
 allow
