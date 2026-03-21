@@ -2,14 +2,14 @@
 
 Official Convex plugins for AI coding agents, providing comprehensive development tools for building reactive backends with TypeScript.
 
-**Supported Agents:** Cursor, Claude Code (more coming soon)
+**Supported Agents:** Gemini CLI, Claude Code, Cursor IDE
 
 ## Overview
 
 This plugin makes Convex development easier by providing:
 
 - **18 Best Practice Rules** — Persistent AI guidance for query optimization, security, schema design, and more
-- **6 Specialized Skills** — Expert agent capabilities including quickstart, schema building, function creation, authentication, and migrations
+- **7 Modular Skills** — Expert agent capabilities including quickstart, auth, performance audits, and migrations
 - **2 Custom Agents** — Specialized advisor and code reviewer for Convex development
 - **MCP Integration** — Direct access to your Convex deployment data and operations
 - **Development Hooks** — Automated validation, codegen, and pre-commit checks
@@ -26,14 +26,33 @@ This plugin makes Convex development easier by providing:
 
 ## Installation
 
-Install this plugin via the Cursor Marketplace or manually:
+### Gemini CLI
+Install as a local extension to enable MCP data access and specialized skills:
 
 ```bash
-# Clone or download this plugin
-cd ~/.cursor/plugins
-git clone <this-repo-url> convex
+# Clone the repository
+git clone https://github.com/JesseVent/convex-agent-plugins.git
+cd convex-agent-plugins
 
-# Restart Cursor
+# Install as a local extension
+gemini extensions install .
+```
+
+### Claude Code
+Claude Code uses the same directory structure as Cursor plugins. Use the included install script:
+
+```bash
+# From the project root
+./test-harness/install-plugin.sh
+```
+*Note: This creates a symlink at `~/.claude/plugins/convex`.*
+
+### Cursor IDE
+Clone this repository into your Cursor plugins directory:
+
+```bash
+cd ~/.cursor/plugins
+git clone https://github.com/JesseVent/convex-agent-plugins.git convex
 ```
 
 ## Components
@@ -153,58 +172,42 @@ Runs ESLint, type checking, and common issue detection before commits.
 
 ## Usage Examples
 
-### Creating a New Schema
+### Performing a Performance Audit
 
-```typescript
-// Simply ask the AI:
-"Create a schema for a blog with users, posts, and comments"
+```bash
+# Simply ask the AI:
+"My Convex app feels slow, can you audit the performance?"
 
-// The plugin's schema-builder skill will guide the creation of:
-// - Properly indexed tables
-// - Relational structure (no deep nesting)
-// - Correct validator types
-// - Compound indexes for common queries
+# The plugin's /convex-performance-audit skill will:
+# - Analyze bytes read and OCC conflicts via telemetry
+# - Identify hot paths and suggest indexing strategies
+# - Recommend digest tables or point-in-time reads
 ```
 
 ### Implementing Authentication
 
-```typescript
-// Ask:
-"Set up authentication with WorkOS and create a getCurrentUser helper"
+```bash
+# Ask:
+"Set up authentication with Clerk and create a getCurrentUser helper"
 
-// The auth-setup skill will create:
-// - users table with tokenIdentifier index
-// - getCurrentUser helper function
-// - storeUser mutation for first sign-in
-// - Example access control patterns
-```
-
-### Building Secure CRUD Operations
-
-```typescript
-// Ask:
-"Create CRUD operations for tasks with ownership checks"
-
-// The function-creator skill will generate:
-// - Properly validated functions
-// - Authentication checks
-// - Authorization (ownership) checks
-// - Indexed queries (no .filter())
-// - Error handling
+# The /convex-setup-auth skill will guide you through:
+# - Installing the correct provider packages
+# - Configuring convex/auth.config.ts
+# - Setting up user identity mapping and access control
 ```
 
 ### Migrating Schema Safely
 
-```typescript
-// Ask:
+```bash
+# Ask:
 "I need to add a required 'status' field to existing tasks"
 
-// The migration-helper skill will:
-// 1. Add field as optional first
-// 2. Generate backfill migration code
-// 3. Provide verification query
-// 4. Guide making field required after backfill
+# The /convex-migration-helper skill will:
+# 1. Widen the schema (optional field first)
+# 2. Generate backfill logic using @convex-dev/migrations
+# 3. Narrow the schema (make field required after backfill)
 ```
+
 
 ## Best Practices Enforced
 
