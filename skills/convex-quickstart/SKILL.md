@@ -1,547 +1,337 @@
 ---
 name: convex-quickstart
-description: Initialize a new Convex backend from scratch with schema, auth, and basic CRUD operations. Use when starting a new project or adding Convex to an existing app.
+description: Initialize a new Convex project from scratch or add Convex to an existing app. Use when starting a new project with Convex, scaffolding a Convex app, or integrating Convex into an existing frontend.
 ---
 
 # Convex Quickstart
 
-Get a production-ready Convex backend set up in minutes. This skill guides you through initializing Convex, creating your schema, setting up auth, and building your first CRUD operations.
+Set up a working Convex project as fast as possible.
 
 ## When to Use
 
 - Starting a brand new project with Convex
-- Adding Convex to an existing React/Next.js app
-- Prototyping a new feature with real-time data
-- Converting from another backend to Convex
-- Teaching someone Convex for the first time
+- Adding Convex to an existing React, Next.js, Vue, Svelte, or other app
+- Scaffolding a Convex app for prototyping
 
-## Prerequisites Check
+## When Not to Use
 
-Before starting, verify:
+- The project already has Convex installed and `convex/` exists - just start building
+- You only need to add auth to an existing Convex app - use the `convex-setup-auth` skill
+
+## Workflow
+
+1. Determine the starting point: new project or existing app
+2. If new project, pick a template and scaffold with `npm create convex@latest`
+3. If existing app, install `convex` and wire up the provider
+4. Run `npx convex dev` to connect a deployment and start the dev loop
+5. Verify the setup works
+
+## Path 1: New Project (Recommended)
+
+Use the official scaffolding tool. It creates a complete project with the frontend framework, Convex backend, and all config wired together.
+
+### Pick a template
+
+| Template | Stack |
+|----------|-------|
+| `react-vite-shadcn` | React + Vite + Tailwind + shadcn/ui |
+| `nextjs-shadcn` | Next.js App Router + Tailwind + shadcn/ui |
+| `react-vite-clerk-shadcn` | React + Vite + Clerk auth + shadcn/ui |
+| `nextjs-clerk` | Next.js + Clerk auth |
+| `nextjs-convexauth-shadcn` | Next.js + Convex Auth + shadcn/ui |
+| `nextjs-lucia-shadcn` | Next.js + Lucia auth + shadcn/ui |
+| `bare` | Convex backend only, no frontend |
+
+If the user has not specified a preference, default to `react-vite-shadcn` for simple apps or `nextjs-shadcn` for apps that need SSR or API routes.
+
+You can also use any GitHub repo as a template:
+
 ```bash
-node --version  # v18 or higher
-npm --version   # v8 or higher
+npm create convex@latest my-app -- -t owner/repo
+npm create convex@latest my-app -- -t owner/repo#branch
 ```
 
-## Quick Start Flow
+### Scaffold the project
 
-### Step 1: Install and Initialize
+Always pass the project name and template flag to avoid interactive prompts:
 
 ```bash
-# Install Convex
+npm create convex@latest my-app -- -t react-vite-shadcn
+cd my-app
+npm install
+```
+
+The scaffolding tool creates files but does not run `npm install`, so you must run it yourself.
+
+To scaffold in the current directory (if it is empty):
+
+```bash
+npm create convex@latest . -- -t react-vite-shadcn
+npm install
+```
+
+### Start the dev loop
+
+`npx convex dev` is a long-running watcher process that syncs backend code to a Convex deployment on every save. It also requires authentication on first run (browser-based OAuth). Both of these make it unsuitable for an agent to run directly.
+
+**Ask the user to run this themselves:**
+
+Tell the user to run `npx convex dev` in their terminal. On first run it will prompt them to log in or develop anonymously. Once running, it will:
+- Create a Convex project and dev deployment
+- Write the deployment URL to `.env.local`
+- Create the `convex/` directory with generated types
+- Watch for changes and sync continuously
+
+The user should keep `npx convex dev` running in the background while you work on code. The watcher will automatically pick up any files you create or edit in `convex/`.
+
+**Exception - cloud agents (Codex, Jules, Devin):** These environments cannot open a browser for login. See the Agent Mode section below for how to run anonymously without user interaction.
+
+### Start the frontend
+
+The user should also run the frontend dev server in a separate terminal:
+
+```bash
+npm run dev
+```
+
+Vite apps serve on `http://localhost:5173`, Next.js on `http://localhost:3000`.
+
+### What you get
+
+After scaffolding, the project structure looks like:
+
+```
+my-app/
+  convex/           # Backend functions and schema
+    _generated/     # Auto-generated types (check this into git)
+    schema.ts       # Database schema (if template includes one)
+  src/              # Frontend code (or app/ for Next.js)
+  package.json
+  .env.local        # CONVEX_URL / VITE_CONVEX_URL / NEXT_PUBLIC_CONVEX_URL
+```
+
+The template already has:
+- `ConvexProvider` wired into the app root
+- Correct env var names for the framework
+- Tailwind and shadcn/ui ready (for shadcn templates)
+- Auth provider configured (for auth templates)
+
+You are ready to start adding schema, functions, and UI.
+
+## Path 2: Add Convex to an Existing App
+
+Use this when the user already has a frontend project and wants to add Convex as the backend.
+
+### Install
+
+```bash
 npm install convex
-
-# Initialize (creates convex/ directory)
-npx convex dev
 ```
 
-This command:
-- Creates `convex/` directory
-- Sets up authentication
-- Starts development server
-- Generates TypeScript types
+### Initialize and start dev loop
 
-### Step 2: Create Schema
+Ask the user to run `npx convex dev` in their terminal. This handles login, creates the `convex/` directory, writes the deployment URL to `.env.local`, and starts the file watcher. See the notes in Path 1 about why the agent should not run this directly.
 
-Create `convex/schema.ts`:
+### Wire up the provider
 
-```typescript
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+The Convex client must wrap the app at the root. The setup varies by framework.
 
-export default defineSchema({
-  users: defineTable({
-    tokenIdentifier: v.string(),
-    name: v.string(),
-    email: v.string(),
-  }).index("by_token", ["tokenIdentifier"]),
+Create the `ConvexReactClient` at module scope, not inside a component:
 
-  // Add your tables here
-  // Example: Tasks table
-  tasks: defineTable({
-    userId: v.id("users"),
-    title: v.string(),
-    completed: v.boolean(),
-    createdAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_user_and_completed", ["userId", "completed"]),
-});
-```
-
-### Step 3: Set Up Authentication
-
-We'll use WorkOS AuthKit, which provides a complete auth solution with minimal setup.
-
-```bash
-npm install @workos-inc/authkit-react
-```
-
-#### For React/Vite Apps:
-
-```typescript
-// src/main.tsx
-import { AuthKitProvider, useAuth } from "@workos-inc/authkit-react";
-import { ConvexReactClient } from "convex/react";
-import { ConvexProvider } from "convex/react";
-
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL);
-
-// Configure Convex to use WorkOS auth
-convex.setAuth(useAuth);
-
+```tsx
+// Bad: re-creates the client on every render
 function App() {
-  return (
-    <AuthKitProvider clientId={import.meta.env.VITE_WORKOS_CLIENT_ID}>
-      <ConvexProvider client={convex}>
-        <YourApp />
-      </ConvexProvider>
-    </AuthKitProvider>
-  );
+  const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+  return <ConvexProvider client={convex}>...</ConvexProvider>;
+}
+
+// Good: created once at module scope
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+function App() {
+  return <ConvexProvider client={convex}>...</ConvexProvider>;
 }
 ```
 
-#### For Next.js Apps:
+#### React (Vite)
 
-```bash
-npm install @workos-inc/authkit-nextjs
+```tsx
+// src/main.tsx
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import App from "./App";
+
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <ConvexProvider client={convex}>
+      <App />
+    </ConvexProvider>
+  </StrictMode>,
+);
 ```
 
-```typescript
+#### Next.js (App Router)
+
+```tsx
+// app/ConvexClientProvider.tsx
+"use client";
+
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ReactNode } from "react";
+
+const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+export function ConvexClientProvider({ children }: { children: ReactNode }) {
+  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+}
+```
+
+```tsx
 // app/layout.tsx
-import { AuthKitProvider } from "@workos-inc/authkit-nextjs";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html>
+    <html lang="en">
       <body>
-        <AuthKitProvider>
-          <ConvexClientProvider>
-            {children}
-          </ConvexClientProvider>
-        </AuthKitProvider>
+        <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
     </html>
   );
 }
 ```
 
-```typescript
-// app/ConvexClientProvider.tsx
-"use client";
+#### Other frameworks
 
-import { ConvexReactClient } from "convex/react";
-import { ConvexProvider } from "convex/react";
-import { useAuth } from "@workos-inc/authkit-nextjs";
+For Vue, Svelte, React Native, TanStack Start, Remix, and others, follow the matching quickstart guide:
 
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+- [Vue](https://docs.convex.dev/quickstart/vue)
+- [Svelte](https://docs.convex.dev/quickstart/svelte)
+- [React Native](https://docs.convex.dev/quickstart/react-native)
+- [TanStack Start](https://docs.convex.dev/quickstart/tanstack-start)
+- [Remix](https://docs.convex.dev/quickstart/remix)
+- [Node.js (no frontend)](https://docs.convex.dev/quickstart/nodejs)
 
-export function ConvexClientProvider({ children }: { children: React.ReactNode }) {
-  const { getToken } = useAuth();
+### Environment variables
 
-  convex.setAuth(async () => {
-    return await getToken();
-  });
+The env var name depends on the framework:
 
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
-}
-```
+| Framework | Variable |
+|-----------|----------|
+| Vite | `VITE_CONVEX_URL` |
+| Next.js | `NEXT_PUBLIC_CONVEX_URL` |
+| Remix | `CONVEX_URL` |
+| React Native | `EXPO_PUBLIC_CONVEX_URL` |
 
-#### Environment Variables:
+`npx convex dev` writes the correct variable to `.env.local` automatically.
+
+## Agent Mode (Cloud-Based Agents)
+
+When running in a cloud-based agent environment (Codex, Jules, Devin, Cursor Background Agents) where you cannot log in interactively, set `CONVEX_AGENT_MODE=anonymous` to use a local anonymous deployment.
+
+Add `CONVEX_AGENT_MODE=anonymous` to `.env.local`, or set it inline:
 
 ```bash
-# .env.local
-VITE_CONVEX_URL=https://your-deployment.convex.cloud
-VITE_WORKOS_CLIENT_ID=your_workos_client_id
-
-# For Next.js:
-NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
-NEXT_PUBLIC_WORKOS_CLIENT_ID=your_workos_client_id
-WORKOS_API_KEY=your_workos_api_key
-WORKOS_COOKIE_PASSWORD=generate_a_random_32_character_string
+CONVEX_AGENT_MODE=anonymous npx convex dev
 ```
 
-**Alternative auth providers:** If you need to use a different provider (Clerk, Auth0, custom JWT), see the [Convex auth documentation](https://docs.convex.dev/auth).
+This runs a local Convex backend on the VM without requiring authentication, and avoids conflicting with the user's personal dev deployment.
 
-### Step 4: Create Auth Helpers
+## Verify the Setup
 
-Create `convex/lib/auth.ts`:
+After setup, confirm everything is working:
 
-```typescript
-import { QueryCtx, MutationCtx } from "../_generated/server";
-import { Doc } from "../_generated/dataModel";
+1. The user confirms `npx convex dev` is running without errors
+2. The `convex/_generated/` directory exists and has `api.ts` and `server.ts`
+3. `.env.local` contains the deployment URL
 
-export async function getCurrentUser(
-  ctx: QueryCtx | MutationCtx
-): Promise<Doc<"users">> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) {
-    throw new Error("Not authenticated");
-  }
+## Writing Your First Function
 
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_token", q =>
-      q.eq("tokenIdentifier", identity.tokenIdentifier)
-    )
-    .unique();
+Once the project is set up, create a schema and a query to verify the full loop works.
 
-  if (!user) {
-    throw new Error("User not found");
-  }
+`convex/schema.ts`:
 
-  return user;
-}
-```
+```ts
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
 
-Create `convex/users.ts`:
-
-```typescript
-import { mutation } from "./_generated/server";
-
-export const store = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-
-    const existing = await ctx.db
-      .query("users")
-      .withIndex("by_token", q =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
-      .unique();
-
-    if (existing) return existing._id;
-
-    return await ctx.db.insert("users", {
-      tokenIdentifier: identity.tokenIdentifier,
-      name: identity.name ?? "Anonymous",
-      email: identity.email ?? "",
-    });
-  },
+export default defineSchema({
+  tasks: defineTable({
+    text: v.string(),
+    completed: v.boolean(),
+  }),
 });
 ```
 
-### Step 5: Create Your First CRUD Operations
+`convex/tasks.ts`:
 
-Create `convex/tasks.ts`:
-
-```typescript
+```ts
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getCurrentUser } from "./lib/auth";
 
-// List all tasks for current user
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const user = await getCurrentUser(ctx);
-    return await ctx.db
-      .query("tasks")
-      .withIndex("by_user", q => q.eq("userId", user._id))
-      .order("desc")
-      .collect();
+    return await ctx.db.query("tasks").collect();
   },
 });
 
-// Get a single task
-export const get = query({
-  args: { taskId: v.id("tasks") },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-    const task = await ctx.db.get(args.taskId);
-
-    if (!task) throw new Error("Task not found");
-    if (task.userId !== user._id) throw new Error("Unauthorized");
-
-    return task;
-  },
-});
-
-// Create a task
 export const create = mutation({
-  args: { title: v.string() },
+  args: { text: v.string() },
   handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-    return await ctx.db.insert("tasks", {
-      userId: user._id,
-      title: args.title,
-      completed: false,
-      createdAt: Date.now(),
-    });
-  },
-});
-
-// Update a task
-export const update = mutation({
-  args: {
-    taskId: v.id("tasks"),
-    title: v.optional(v.string()),
-    completed: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-    const task = await ctx.db.get(args.taskId);
-
-    if (!task) throw new Error("Task not found");
-    if (task.userId !== user._id) throw new Error("Unauthorized");
-
-    const updates: any = {};
-    if (args.title !== undefined) updates.title = args.title;
-    if (args.completed !== undefined) updates.completed = args.completed;
-
-    await ctx.db.patch(args.taskId, updates);
-  },
-});
-
-// Delete a task
-export const remove = mutation({
-  args: { taskId: v.id("tasks") },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-    const task = await ctx.db.get(args.taskId);
-
-    if (!task) throw new Error("Task not found");
-    if (task.userId !== user._id) throw new Error("Unauthorized");
-
-    await ctx.db.delete(args.taskId);
+    await ctx.db.insert("tasks", { text: args.text, completed: false });
   },
 });
 ```
 
-### Step 6: Use in Your React App
+Use in a React component (adjust the import path based on your file location relative to `convex/`):
 
-```typescript
-// app/tasks/page.tsx
-"use client";
-
+```tsx
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "../convex/_generated/api";
 
-export default function TasksPage() {
+function Tasks() {
   const tasks = useQuery(api.tasks.list);
   const create = useMutation(api.tasks.create);
-  const update = useMutation(api.tasks.update);
-  const remove = useMutation(api.tasks.remove);
-
-  if (!tasks) return <div>Loading...</div>;
 
   return (
     <div>
-      <h1>Tasks</h1>
-
-      {/* Create task */}
-      <form onSubmit={(e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target as HTMLFormElement);
-        create({ title: formData.get("title") as string });
-        (e.target as HTMLFormElement).reset();
-      }}>
-        <input name="title" placeholder="New task" required />
-        <button type="submit">Add</button>
-      </form>
-
-      {/* Task list */}
-      {tasks.map(task => (
-        <div key={task._id}>
-          <input
-            type="checkbox"
-            checked={task.completed}
-            onChange={(e) => update({
-              taskId: task._id,
-              completed: e.target.checked
-            })}
-          />
-          <span>{task.title}</span>
-          <button onClick={() => remove({ taskId: task._id })}>
-            Delete
-          </button>
-        </div>
-      ))}
+      <button onClick={() => create({ text: "New task" })}>Add</button>
+      {tasks?.map((t) => <div key={t._id}>{t.text}</div>)}
     </div>
   );
 }
 ```
 
-### Step 7: Development vs Production
+## Development vs Production
 
-**For Development (use this!):**
+Always use `npx convex dev` during development. It runs against your personal dev deployment and syncs code on save.
+
+When ready to ship, deploy to production:
+
 ```bash
-# Start development server (NOT production!)
-npx convex dev
-
-# This runs locally and auto-reloads on changes
-# Use this for all development work
-```
-
-**For Production Deployment:**
-```bash
-# ONLY use this when deploying to production!
 npx convex deploy
-
-# WARNING: This deploys to your production environment
-# Don't use this during development
 ```
 
-**Important:** Always use `npx convex dev` during development. Only use `npx convex deploy` when you're ready to ship to production.
-
-## Common Patterns
-
-### Paginated Queries
-
-```typescript
-export const listPaginated = query({
-  args: {
-    cursor: v.optional(v.string()),
-    limit: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-
-    const results = await ctx.db
-      .query("tasks")
-      .withIndex("by_user", q => q.eq("userId", user._id))
-      .order("desc")
-      .paginate({ cursor: args.cursor, limit: args.limit });
-
-    return results;
-  },
-});
-```
-
-### Filtering by Status
-
-```typescript
-export const listByStatus = query({
-  args: {
-    completed: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-
-    return await ctx.db
-      .query("tasks")
-      .withIndex("by_user_and_completed", q =>
-        q.eq("userId", user._id).eq("completed", args.completed)
-      )
-      .collect();
-  },
-});
-```
-
-### Scheduled Jobs
-
-```typescript
-// convex/crons.ts
-import { cronJobs } from "convex/server";
-import { internal } from "./_generated/api";
-
-const crons = cronJobs();
-
-crons.daily(
-  "cleanup-old-tasks",
-  { hourUTC: 0, minuteUTC: 0 },
-  internal.tasks.cleanupOld
-);
-
-export default crons;
-
-// convex/tasks.ts
-export const cleanupOld = internalMutation({
-  handler: async (ctx) => {
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const oldTasks = await ctx.db
-      .query("tasks")
-      .filter(q =>
-        q.and(
-          q.eq(q.field("completed"), true),
-          q.lt(q.field("createdAt"), thirtyDaysAgo)
-        )
-      )
-      .collect();
-
-    for (const task of oldTasks) {
-      await ctx.db.delete(task._id);
-    }
-  },
-});
-```
-
-## Project Templates
-
-### React + Vite + Convex
-
-```bash
-npm create vite@latest my-app -- --template react-ts
-cd my-app
-npm install convex @workos-inc/authkit-react
-npx convex dev
-```
-
-### Next.js + Convex
-
-```bash
-npx create-next-app@latest my-app
-cd my-app
-npm install convex @workos-inc/authkit-nextjs
-npx convex dev
-```
-
-### Expo (React Native) + Convex
-
-```bash
-npx create-expo-app my-app
-cd my-app
-npm install convex
-npx convex dev
-```
-
-## Checklist
-
-- [ ] `npm install convex` completed
-- [ ] `npx convex dev` running (use this, NOT deploy!)
-- [ ] Schema created with proper indexes
-- [ ] Auth provider configured (WorkOS/custom)
-- [ ] `getCurrentUser` helper implemented
-- [ ] User storage mutation created
-- [ ] CRUD operations with auth checks
-- [ ] Frontend integrated with hooks
-- [ ] Tested queries and mutations locally
-- [ ] When ready for production, use `npx convex deploy`
-
-**Remember:** Use `npx convex dev` for all development work. Only use `npx convex deploy` when deploying to production!
+This pushes to the production deployment, which is separate from dev. Do not use `deploy` during development.
 
 ## Next Steps
 
-After quickstart:
-1. Add more tables to schema
-2. Implement relationships between tables
-3. Add file storage (Convex supports file uploads)
-4. Set up vector search for AI features
-5. Add cron jobs for scheduled tasks
-6. Configure production environment variables
+- Add authentication: use the `convex-setup-auth` skill
+- Design your schema: see [Schema docs](https://docs.convex.dev/database/schemas)
+- Build components: use the `convex-create-component` skill
+- Plan a migration: use the `convex-migration-helper` skill
+- Add file storage: see [File Storage docs](https://docs.convex.dev/file-storage)
+- Set up cron jobs: see [Scheduling docs](https://docs.convex.dev/scheduling)
 
-## Troubleshooting
+## Checklist
 
-### "Not authenticated" errors
-- Ensure auth provider is configured
-- Call `storeUser` mutation on first sign-in
-- Check `getCurrentUser` is imported correctly
-
-### Types not updating
-- Run `npx convex dev` (regenerates types)
-- Restart TypeScript server in editor
-
-### Slow queries
-- Add indexes to schema
-- Use `.withIndex()` instead of `.filter()`
-- Check query patterns in dashboard
-
-## Learn More
-
-- [Convex Docs](https://docs.convex.dev)
-- [React Quickstart](https://docs.convex.dev/quickstart/react)
-- [Next.js Quickstart](https://docs.convex.dev/quickstart/nextjs)
-- [Example Apps](https://github.com/get-convex/convex-demos)
+- [ ] Determined starting point: new project or existing app
+- [ ] If new project: scaffolded with `npm create convex@latest` using appropriate template
+- [ ] If existing app: installed `convex` and wired up the provider
+- [ ] User has `npx convex dev` running and connected to a deployment
+- [ ] `convex/_generated/` directory exists with types
+- [ ] `.env.local` has the deployment URL
+- [ ] Verified a basic query/mutation round-trip works

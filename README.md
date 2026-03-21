@@ -73,78 +73,20 @@ Rules automatically guide the AI when working in your `convex/` directory.
 Invoke specialized agent capabilities for complex Convex tasks:
 
 #### `/convex-quickstart`
-Initialize a new Convex backend from scratch with schema, auth, and CRUD operations.
+Initialize a new Convex backend from scratch or add Convex to an existing app. Supports multiple templates and Agent Mode for cloud environments.
 
-**Use when:**
-- Starting a brand new project with Convex
-- Adding Convex to an existing React/Next.js app
-- Need step-by-step setup guidance
+#### `/convex-setup-auth`
+Set up authentication with proper user management, identity mapping, and access control. Includes dedicated reference guides for **Convex Auth, Clerk, WorkOS, and Auth0**.
 
-**Example:**
-```
-User: "Set up a Convex backend for my project"
-Assistant: [Walks through installation, schema, auth, and CRUD setup]
-```
+#### `/convex-create-component`
+Design and build reusable Convex components with clear boundaries, isolated state, and app-facing wrappers. Supports local and packaged component patterns.
 
-#### `/schema-builder`
-Design and generate database schemas with proper validation, indexes, and relationships.
+#### `/convex-migration-helper`
+Plan and execute schema migrations safely using the `@convex-dev/migrations` component. Handles the **Widen -> Migrate -> Narrow** deployment workflow.
 
-**Use when:**
-- Creating `convex/schema.ts`
-- Adding tables or modifying structure
-- Converting nested data to relational design
-- Optimizing indexes
+#### `/convex-performance-audit`
+Audit and optimize application performance. Covers hot path reads, write contention (OCC), subscription costs, and function limits based on telemetry signals.
 
-**Example:**
-```
-User: "Create a schema for a task management app with users, teams, and tasks"
-Assistant: [Generates complete schema with proper indexes and relationships]
-```
-
-#### `/function-creator`
-Create queries, mutations, and actions with proper validation, auth, and error handling.
-
-**Use when:**
-- Implementing new API endpoints
-- Creating CRUD operations
-- Adding authenticated functions
-- Writing actions that call external APIs
-
-**Example:**
-```
-User: "Create a mutation to update a task with ownership check"
-Assistant: [Generates secure mutation with auth and authorization]
-```
-
-#### `/auth-setup`
-Set up authentication with user management, identity mapping, and access control.
-
-**Use when:**
-- Implementing authentication for the first time
-- Setting up OAuth providers (WorkOS, Auth0)
-- Creating auth helper functions
-- Implementing role-based access control
-
-**Example:**
-```
-User: "Set up WorkOS authentication with user roles"
-Assistant: [Creates users table, auth helpers, and role checking functions]
-```
-
-#### `/migration-helper`
-Plan and execute schema migrations safely without downtime.
-
-**Use when:**
-- Adding required fields to existing tables
-- Changing field types or structure
-- Migrating from arrays to relational tables
-- Renaming fields
-
-**Example:**
-```
-User: "Migrate tags array to a separate tags table"
-Assistant: [Creates migration plan with dual-write pattern and batch processing]
-```
 
 ### Custom Agents
 
