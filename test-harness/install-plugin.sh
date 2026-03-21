@@ -24,7 +24,7 @@ echo "🔗 Creating symlink to plugin..."
 ln -s "$PLUGIN_DIR" "$INSTALL_DIR"
 
 # Verify installation
-if [ ! -f "$INSTALL_DIR/.cursor/plugin.json" ]; then
+if [ ! -f "$INSTALL_DIR/.cursor-plugin/plugin.json" ]; then
   echo "❌ Installation failed: plugin.json not found"
   exit 1
 fi
@@ -32,7 +32,7 @@ fi
 echo "✅ Plugin installed successfully!"
 echo ""
 echo "📍 Installed at: $INSTALL_DIR"
-echo "🔍 Verify with: ls -la $INSTALL_DIR/.cursor/plugin.json"
+echo "🔍 Verify with: ls -la $INSTALL_DIR/.cursor-plugin/plugin.json"
 echo ""
 echo "🚀 Next steps:"
 echo "  1. cd /tmp/convex-plugin-test"

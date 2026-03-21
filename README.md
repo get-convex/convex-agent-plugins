@@ -2,14 +2,14 @@
 
 Official Convex plugins for AI coding agents, providing comprehensive development tools for building reactive backends with TypeScript.
 
-**Supported Agents:** Cursor, Claude Code (more coming soon)
+**Supported Agents:** Gemini CLI, Claude Code, Cursor IDE
 
 ## Overview
 
 This plugin makes Convex development easier by providing:
 
 - **18 Best Practice Rules** — Persistent AI guidance for query optimization, security, schema design, and more
-- **6 Specialized Skills** — Expert agent capabilities including quickstart, schema building, function creation, authentication, and migrations
+- **7 Modular Skills** — Expert agent capabilities including quickstart, auth, performance audits, and migrations
 - **2 Custom Agents** — Specialized advisor and code reviewer for Convex development
 - **MCP Integration** — Direct access to your Convex deployment data and operations
 - **Development Hooks** — Automated validation, codegen, and pre-commit checks
@@ -26,14 +26,33 @@ This plugin makes Convex development easier by providing:
 
 ## Installation
 
-Install this plugin via the Cursor Marketplace or manually:
+### Gemini CLI
+Install as a local extension to enable MCP data access and specialized skills:
 
 ```bash
-# Clone or download this plugin
-cd ~/.cursor/plugins
-git clone <this-repo-url> convex
+# Clone the repository
+git clone https://github.com/JesseVent/convex-agent-plugins.git
+cd convex-agent-plugins
 
-# Restart Cursor
+# Install as a local extension
+gemini extensions install .
+```
+
+### Claude Code
+Claude Code uses the same directory structure as Cursor plugins. Use the included install script:
+
+```bash
+# From the project root
+./test-harness/install-plugin.sh
+```
+*Note: This creates a symlink at `~/.claude/plugins/convex`.*
+
+### Cursor IDE
+Clone this repository into your Cursor plugins directory:
+
+```bash
+cd ~/.cursor/plugins
+git clone https://github.com/JesseVent/convex-agent-plugins.git convex
 ```
 
 ## Components
@@ -73,78 +92,20 @@ Rules automatically guide the AI when working in your `convex/` directory.
 Invoke specialized agent capabilities for complex Convex tasks:
 
 #### `/convex-quickstart`
-Initialize a new Convex backend from scratch with schema, auth, and CRUD operations.
+Initialize a new Convex backend from scratch or add Convex to an existing app. Supports multiple templates and Agent Mode for cloud environments.
 
-**Use when:**
-- Starting a brand new project with Convex
-- Adding Convex to an existing React/Next.js app
-- Need step-by-step setup guidance
+#### `/convex-setup-auth`
+Set up authentication with proper user management, identity mapping, and access control. Includes dedicated reference guides for **Convex Auth, Clerk, WorkOS, and Auth0**.
 
-**Example:**
-```
-User: "Set up a Convex backend for my project"
-Assistant: [Walks through installation, schema, auth, and CRUD setup]
-```
+#### `/convex-create-component`
+Design and build reusable Convex components with clear boundaries, isolated state, and app-facing wrappers. Supports local and packaged component patterns.
 
-#### `/schema-builder`
-Design and generate database schemas with proper validation, indexes, and relationships.
+#### `/convex-migration-helper`
+Plan and execute schema migrations safely using the `@convex-dev/migrations` component. Handles the **Widen -> Migrate -> Narrow** deployment workflow.
 
-**Use when:**
-- Creating `convex/schema.ts`
-- Adding tables or modifying structure
-- Converting nested data to relational design
-- Optimizing indexes
+#### `/convex-performance-audit`
+Audit and optimize application performance. Covers hot path reads, write contention (OCC), subscription costs, and function limits based on telemetry signals.
 
-**Example:**
-```
-User: "Create a schema for a task management app with users, teams, and tasks"
-Assistant: [Generates complete schema with proper indexes and relationships]
-```
-
-#### `/function-creator`
-Create queries, mutations, and actions with proper validation, auth, and error handling.
-
-**Use when:**
-- Implementing new API endpoints
-- Creating CRUD operations
-- Adding authenticated functions
-- Writing actions that call external APIs
-
-**Example:**
-```
-User: "Create a mutation to update a task with ownership check"
-Assistant: [Generates secure mutation with auth and authorization]
-```
-
-#### `/auth-setup`
-Set up authentication with user management, identity mapping, and access control.
-
-**Use when:**
-- Implementing authentication for the first time
-- Setting up OAuth providers (WorkOS, Auth0)
-- Creating auth helper functions
-- Implementing role-based access control
-
-**Example:**
-```
-User: "Set up WorkOS authentication with user roles"
-Assistant: [Creates users table, auth helpers, and role checking functions]
-```
-
-#### `/migration-helper`
-Plan and execute schema migrations safely without downtime.
-
-**Use when:**
-- Adding required fields to existing tables
-- Changing field types or structure
-- Migrating from arrays to relational tables
-- Renaming fields
-
-**Example:**
-```
-User: "Migrate tags array to a separate tags table"
-Assistant: [Creates migration plan with dual-write pattern and batch processing]
-```
 
 ### Custom Agents
 
@@ -211,58 +172,42 @@ Runs ESLint, type checking, and common issue detection before commits.
 
 ## Usage Examples
 
-### Creating a New Schema
+### Performing a Performance Audit
 
-```typescript
-// Simply ask the AI:
-"Create a schema for a blog with users, posts, and comments"
+```bash
+# Simply ask the AI:
+"My Convex app feels slow, can you audit the performance?"
 
-// The plugin's schema-builder skill will guide the creation of:
-// - Properly indexed tables
-// - Relational structure (no deep nesting)
-// - Correct validator types
-// - Compound indexes for common queries
+# The plugin's /convex-performance-audit skill will:
+# - Analyze bytes read and OCC conflicts via telemetry
+# - Identify hot paths and suggest indexing strategies
+# - Recommend digest tables or point-in-time reads
 ```
 
 ### Implementing Authentication
 
-```typescript
-// Ask:
-"Set up authentication with WorkOS and create a getCurrentUser helper"
+```bash
+# Ask:
+"Set up authentication with Clerk and create a getCurrentUser helper"
 
-// The auth-setup skill will create:
-// - users table with tokenIdentifier index
-// - getCurrentUser helper function
-// - storeUser mutation for first sign-in
-// - Example access control patterns
-```
-
-### Building Secure CRUD Operations
-
-```typescript
-// Ask:
-"Create CRUD operations for tasks with ownership checks"
-
-// The function-creator skill will generate:
-// - Properly validated functions
-// - Authentication checks
-// - Authorization (ownership) checks
-// - Indexed queries (no .filter())
-// - Error handling
+# The /convex-setup-auth skill will guide you through:
+# - Installing the correct provider packages
+# - Configuring convex/auth.config.ts
+# - Setting up user identity mapping and access control
 ```
 
 ### Migrating Schema Safely
 
-```typescript
-// Ask:
+```bash
+# Ask:
 "I need to add a required 'status' field to existing tasks"
 
-// The migration-helper skill will:
-// 1. Add field as optional first
-// 2. Generate backfill migration code
-// 3. Provide verification query
-// 4. Guide making field required after backfill
+# The /convex-migration-helper skill will:
+# 1. Widen the schema (optional field first)
+# 2. Generate backfill logic using @convex-dev/migrations
+# 3. Narrow the schema (make field required after backfill)
 ```
+
 
 ## Best Practices Enforced
 
