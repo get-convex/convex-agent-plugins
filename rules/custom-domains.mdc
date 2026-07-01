@@ -1,0 +1,23 @@
+---
+description: Wire a domain the user already owns (own registrar) to their Convex app — DNS records, custom-domain attach, auth-origin rebind
+globs:
+alwaysApply: false
+---
+
+# Custom domain with your own provider
+
+When the user already OWNS a domain (GoDaddy/Namecheap/Cloudflare/…) and wants it
+pointing at their Convex app:
+
+1. Identify the target: the published site host or the deployment's HTTP actions
+   URL (`npx convex env get CONVEX_SITE_URL`).
+2. Give the EXACT DNS records to create at their registrar: the CNAME (or A/ALIAS
+   at the apex) plus the TXT verification record — concrete host/value strings.
+3. Attach the custom domain on Convex (dashboard → Custom Domains) and wait for
+   verification; DNS propagation can take minutes to hours.
+4. If the app uses auth, rebind the auth origin (`SITE_URL`/`RP_ID`/`ORIGIN`) and
+   re-deploy — otherwise sign-in breaks on the new domain.
+5. Verify HTTPS serving, including the apex → www redirect if configured.
+
+Rules: NEVER ask for registrar credentials; always include the TXT record; if
+the user wants to FIND/BUY a domain, that flow is not in this plugin yet.
