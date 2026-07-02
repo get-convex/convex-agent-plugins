@@ -12,7 +12,7 @@ This plugin makes Convex development easier by providing:
 - **6 Specialized Skills** — Expert agent capabilities including quickstart, schema building, function creation, authentication, and migrations
 - **2 Custom Agents** — Specialized advisor and code reviewer for Convex development
 - **MCP Integration** — Direct access to your Convex deployment data and operations
-- **Development Hooks** — Automated validation, codegen, and pre-commit checks
+- **Development Hooks** — pre-commit checks (blocking) and an end-of-turn verify retry-loop (non-blocking; see [Cursor plugin mechanism status](#cursor-plugin-mechanism-status))
 
 ## What is Convex?
 
@@ -186,28 +186,38 @@ export CONVEX_DEPLOY_KEY="your-deploy-key"
 
 ### Development Hooks
 
-Automated checks and operations triggered by file changes:
+The plugin ships two Cursor hooks (`hooks.json`, wired via `.cursor-plugin/plugin.json`'s
+`hooks` field — see [Cursor's hooks docs](https://cursor.com/docs/hooks) for the
+full event list and schema). These are real Cursor mechanisms, not just
+instructions: each is a spawned script that Cursor calls automatically and
+whose JSON output Cursor acts on.
 
-#### Pre-Save Validation
-Validates Convex functions have proper `args` and `returns` validators.
+#### Pre-Commit Checks (`beforeShellExecution`)
+Runs before any shell command matching `git commit`; can **deny** the commit
+outright.
 
-- **Triggers on:** Save in `convex/**/*.ts` or `convex/**/*.js`
-- **Checks:** Function exports have args and returns defined
+- **Checks:** `Date.now()` inside/near `query({...})` bodies, `.filter()`
+  chained on `db.query(...)`.
+- **Script:** `scripts/pre-commit-checks.sh`
 
-#### Post-Save Codegen
-Automatically runs Convex codegen after schema changes.
+#### End-of-Turn Verify (`stop`)
+Fires when the agent's turn ends (`status: "completed"`). Cursor's `stop`
+hook **cannot block** completion — but it can return a `followup_message`
+that Cursor automatically submits as the next user turn, capped by
+`loop_limit` (set to `2` here) so it can't loop forever. This turns the
+SELF-VERIFY RULE already in `rules/quickstart.mdc` (run `npx tsc --noEmit`
+before declaring backend work done) from an instruction the agent might
+forget into a mechanism that catches it if it does: if `convex/` exists and
+`npx tsc --noEmit` fails, the hook auto-submits a follow-up turn with the
+compiler errors so the agent fixes them before the session is really "done".
 
-- **Triggers on:** Save in `convex/schema.ts`
-- **Action:** Runs `npx convex codegen --dev`
-
-#### Pre-Commit Checks
-Runs ESLint, type checking, and common issue detection before commits.
-
-- **Checks:**
-  - ESLint on Convex functions
-  - TypeScript type checking
-  - Date.now() in queries (warning)
-  - .filter() on database queries (warning)
+- **Script:** `scripts/stop-verify.sh`
+- **Honest limitation:** this is a retry-loop, not a hard gate — Cursor has
+  no hook that blocks turn completion the way Claude Code's `Stop` hook or a
+  CI gate would. A user who ignores the follow-up (or an agent that exhausts
+  the loop limit) can still end the session with a broken build. See
+  [Cursor plugin mechanism status](#cursor-plugin-mechanism-status) below for
+  how this compares to the Claude Code and Codex equivalents.
 
 ## Usage Examples
 
@@ -317,6 +327,30 @@ npm install convex
 # or
 npm install convex@latest
 ```
+
+## Cursor plugin mechanism status
+
+Convex ships an end-of-turn "verify before you say you're done" mechanism
+across the coding agents it supports, but the *strength* of that mechanism
+depends on what each agent's plugin format actually offers:
+
+| Agent | Mechanism | Enforcement |
+|---|---|---|
+| Claude Code | `Stop` hook | Can block: the hook can require the agent keep working before the turn is allowed to end. |
+| Codex | MCP server leg (`fix_errors_automatically`) | Blocking tool call: the agent's own idle loop calls a tool that blocks until a real event (including a compile error) fires. |
+| **Cursor** | `stop` hook → `followup_message` (`scripts/stop-verify.sh`) | **Not blocking.** Cursor's `stop` hook cannot prevent a turn from ending; it can only auto-submit a follow-up message (capped at `loop_limit: 2` here) asking the agent to fix what the hook found. A user can still walk away from a broken build if they ignore the follow-up or the loop limit is hit. |
+
+This is a real, Cursor-native mechanism — not just the static SELF-VERIFY RULE
+text in `rules/quickstart.mdc` — but it is a retry-loop, not a gate.
+Cursor's plugin format has no hook that blocks turn completion the way
+Claude Code's `Stop` hook does (confirmed against
+[Cursor's hooks documentation](https://cursor.com/docs/hooks): the `stop`
+event's own docs state it fires "when the agent loop ends" and its only
+output field is the informational/loop-triggering `followup_message` — there
+is no `permission`/block field on that event, unlike `beforeShellExecution`
+which this plugin already uses to hard-deny bad `git commit`s). If Cursor
+ships a blocking end-of-turn hook in the future, this is the file to upgrade
+(`scripts/stop-verify.sh` + the `stop` entry in `hooks.json`).
 
 ## Learn More
 

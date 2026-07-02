@@ -6,6 +6,12 @@
         "command": "./scripts/pre-commit-checks.sh",
         "matcher": "\\bgit\\s+commit\\b"
       }
+    ],
+    "stop": [
+      {
+        "command": "./scripts/stop-verify.sh",
+        "loop_limit": 2
+      }
     ]
   }
 }

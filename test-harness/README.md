@@ -13,6 +13,9 @@ Automated test scenarios for validating the Convex plugin behavior in Claude Cod
 
 # Run specific test
 ./run-tests.sh scenarios/01-new-project.md
+
+# Automated smoke test for the `stop` hook (scripts/stop-verify.sh)
+./test-stop-verify.sh
 ```
 
 ## Test Structure
