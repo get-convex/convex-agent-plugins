@@ -344,7 +344,18 @@ export const broken = query({
 
 ## Testing Hooks
 
-Hooks run automatically on file events. To test:
+### Automated: the `stop` hook (end-of-turn verify)
+
+```bash
+./test-harness/test-stop-verify.sh
+```
+
+This is self-contained (no Cursor install needed): it feeds `scripts/stop-verify.sh`
+the same JSON on stdin that Cursor's `stop` hook would, across fixtures
+(no `convex/` dir, non-`completed` status, loop-limit reached, passing
+`tsc --noEmit`, failing `tsc --noEmit`) and checks the JSON it prints back.
+
+### Manual: hooks run automatically on file/shell events. To test:
 
 ### Test: Pre-save validation
 
