@@ -1,22 +1,20 @@
 ---
-description: Get a barebones Convex + web template running from a one-sentence idea (new projects only)
-globs:
+description: "Get a barebones Convex + web template running from a one-sentence idea."
+globs: []
 alwaysApply: false
 ---
 
-# Convex quickstart (barebones)
+# Quickstart: a barebones Convex template, running
 
-When the user wants to START a new app from a one-sentence idea and there is no
-Convex project in the workspace:
+Stand up a barebones Next.js + Convex template from the idea, locally, with an anonymous dev deployment. Minimal by design: no publish step, no feedback panel, no auth pre-bake.
 
-1. Scaffold the minimal template: `npm create convex@latest` (choose Next.js when
-   the user wants a web app), or clone the `next-shadcn` template.
-2. Install deps, then start BOTH dev processes: `npx convex dev` (accept the
-   anonymous dev deployment — no login needed) and the web dev server.
-3. Open the printed dev URL for the user, present a short plan, and CONFIRM
-   before building features beyond the template.
+## Steps
+1. Run recipe `quickstart-recipe@^2` with {idea, template} (the pack fetches + caches it; pinned offline fallback). It creates the project, installs deps, starts the backend (anonymous) and the web dev server.
+2. When it prints the dev URL, open it for the user.
+3. Present a short plan and CONFIRM before building features beyond the template.
 
-Rules: never re-scaffold into an existing Convex project; delegate code under
-`convex/` to the convex conventions rules; don't add Postgres/Redis/Express —
-use Convex primitives. This is the barebones flow: no hosting/publish step, no
-feedback panel, no auth pre-bake.
+## Rules
+- Never re-run the recipe if it already reported success.
+- Delegate any code under `convex/` to the `convex-expert` capability.
+- Don't add Postgres/Redis/Express — use Convex primitives.
+- Don't add hosting/publish, the feedback panel, or passkeys here — offer `labs-quickstart` if the user wants the full experience.
