@@ -188,6 +188,20 @@ fi
 
 cd "$REPO_ROOT" || noop
 
+# Refresh Convex codegen before typechecking so the agent is never chased by stale
+# convex/_generated/ errors for functions it just wrote — the exact failure mode the
+# "keep npx convex dev running" advice worked around, handled here so the user doesn't
+# have to. Best-effort and hard-capped: a watchdog kills codegen if it's slow or has no
+# reachable deployment, and we fall through to tsc unchanged.
+if [ -d "${REPO_ROOT}/convex" ]; then
+  ( npx --no-install convex codegen >/dev/null 2>&1 ) &
+  CODEGEN_PID=$!
+  ( sleep 20; kill "$CODEGEN_PID" >/dev/null 2>&1 ) >/dev/null 2>&1 &
+  WATCHDOG_PID=$!
+  wait "$CODEGEN_PID" 2>/dev/null
+  kill "$WATCHDOG_PID" >/dev/null 2>&1
+fi
+
 TSC_OUTPUT="$(npx --no-install tsc --noEmit 2>&1)"
 TSC_STATUS=$?
 if [ $TSC_STATUS -eq 0 ]; then
