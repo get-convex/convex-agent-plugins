@@ -188,26 +188,19 @@ fi
 
 cd "$REPO_ROOT" || noop
 
-# Keep generated types fresh before typechecking so the agent is never chased by stale
-# convex/_generated/ errors for functions it just wrote — the exact failure mode the
-# "keep npx convex dev running" advice worked around, handled here so the user doesn't have
-# to. On a configured project we refresh codegen (fast). On a fresh project with no deployment
-# yet, `convex dev --once` auto-provisions an anonymous local backend and generates the types,
-# so even an un-set-up project just works — `convex codegen` alone can't, it requires a
-# deployment. Best-effort and hard-capped: a watchdog kills it if it's slow (the cold path may
-# download the backend binary on first run), and we fall through to tsc unchanged.
-if [ -d "${REPO_ROOT}/convex" ]; then
-  if grep -qs "CONVEX_DEPLOYMENT" "${REPO_ROOT}/.env.local" 2>/dev/null || [ -n "${CONVEX_DEPLOYMENT}" ]; then
-    ( npx --no-install convex codegen >/dev/null 2>&1 ) &
-    REFRESH_CAP=25
-  else
-    ( npx --no-install convex dev --once >/dev/null 2>&1 ) &
-    REFRESH_CAP=120
-  fi
-  REFRESH_PID=$!
-  ( sleep "$REFRESH_CAP"; kill "$REFRESH_PID" >/dev/null 2>&1 ) >/dev/null 2>&1 &
+# Refresh codegen before typechecking so the agent is never chased by stale convex/_generated/
+# errors for functions it just wrote — the exact failure mode the "keep npx convex dev running"
+# advice worked around, handled here so the user doesn't have to. ONLY when a deployment is
+# already configured: like the Claude and Codex plugins, we do not provision or deploy an
+# un-set-up project without the user's consent, so a cold project is left untouched (it just
+# needs `convex dev` run once). Best-effort and watchdog-capped so it can never hang the turn;
+# falls through to tsc unchanged on any failure.
+if [ -d "${REPO_ROOT}/convex" ] && { grep -qs "CONVEX_DEPLOYMENT" "${REPO_ROOT}/.env.local" 2>/dev/null || [ -n "${CONVEX_DEPLOYMENT}" ]; }; then
+  ( npx --no-install convex codegen >/dev/null 2>&1 ) &
+  CODEGEN_PID=$!
+  ( sleep 25; kill "$CODEGEN_PID" >/dev/null 2>&1 ) >/dev/null 2>&1 &
   WATCHDOG_PID=$!
-  wait "$REFRESH_PID" 2>/dev/null
+  wait "$CODEGEN_PID" 2>/dev/null
   kill "$WATCHDOG_PID" >/dev/null 2>&1
 fi
 
