@@ -188,17 +188,26 @@ fi
 
 cd "$REPO_ROOT" || noop
 
-# Refresh Convex codegen before typechecking so the agent is never chased by stale
+# Keep generated types fresh before typechecking so the agent is never chased by stale
 # convex/_generated/ errors for functions it just wrote — the exact failure mode the
-# "keep npx convex dev running" advice worked around, handled here so the user doesn't
-# have to. Best-effort and hard-capped: a watchdog kills codegen if it's slow or has no
-# reachable deployment, and we fall through to tsc unchanged.
+# "keep npx convex dev running" advice worked around, handled here so the user doesn't have
+# to. On a configured project we refresh codegen (fast). On a fresh project with no deployment
+# yet, `convex dev --once` auto-provisions an anonymous local backend and generates the types,
+# so even an un-set-up project just works — `convex codegen` alone can't, it requires a
+# deployment. Best-effort and hard-capped: a watchdog kills it if it's slow (the cold path may
+# download the backend binary on first run), and we fall through to tsc unchanged.
 if [ -d "${REPO_ROOT}/convex" ]; then
-  ( npx --no-install convex codegen >/dev/null 2>&1 ) &
-  CODEGEN_PID=$!
-  ( sleep 20; kill "$CODEGEN_PID" >/dev/null 2>&1 ) >/dev/null 2>&1 &
+  if grep -qs "CONVEX_DEPLOYMENT" "${REPO_ROOT}/.env.local" 2>/dev/null || [ -n "${CONVEX_DEPLOYMENT}" ]; then
+    ( npx --no-install convex codegen >/dev/null 2>&1 ) &
+    REFRESH_CAP=25
+  else
+    ( npx --no-install convex dev --once >/dev/null 2>&1 ) &
+    REFRESH_CAP=120
+  fi
+  REFRESH_PID=$!
+  ( sleep "$REFRESH_CAP"; kill "$REFRESH_PID" >/dev/null 2>&1 ) >/dev/null 2>&1 &
   WATCHDOG_PID=$!
-  wait "$CODEGEN_PID" 2>/dev/null
+  wait "$REFRESH_PID" 2>/dev/null
   kill "$WATCHDOG_PID" >/dev/null 2>&1
 fi
 
