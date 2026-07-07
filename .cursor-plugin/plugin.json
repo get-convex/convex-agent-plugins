@@ -1,6 +1,6 @@
 {
   "name": "convex",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Official Convex plugin for Cursor - reactive backend development with TypeScript, including rules, skills, MCP integration, and automation hooks",
   "author": {
     "name": "Convex",
