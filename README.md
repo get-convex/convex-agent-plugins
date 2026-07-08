@@ -368,6 +368,39 @@ This is the official Convex plugin maintained by the Convex team. For issues or 
 - Join the [Convex Discord](https://convex.dev/community)
 - Contact: support@convex.dev
 
+## Privacy & data
+
+This plugin connects to Convex services and collects anonymous usage data. See the
+[Convex privacy policy](https://convex.dev/legal/privacy) for full details and your rights.
+Three kinds of data can leave your machine, each governed by a rule that holds no matter
+which command triggers it:
+
+### 1. Anonymous usage telemetry (on by default, opt-out)
+
+Hooks may send anonymous telemetry to Convex's PostHog project: a random device id, the
+plugin version, your OS, and coarse event names (session start, lint/typecheck counts).
+Never your code, file paths, prompts, or personal identifiers. Opt out with
+`CONVEX_PLUGIN_TELEMETRY=0` or `DO_NOT_TRACK=1`.
+
+### 2. Building your app (only when you invoke a scaffolding flow)
+
+Flows that scaffold or extend an app (such as `quickstart` and `/add`) send the inputs you
+give them to the Convex scaffolding service so it can build for you — for example, the
+one-sentence idea you type is sent to the scaffolding endpoint and logged as a run start.
+These flows also download and run setup scripts from that service. This happens only when
+you invoke such a flow.
+
+### 3. Sharing a session to improve the tools (gated by your agent's approval)
+
+Some flows can offer to send a **redacted** copy of your current session — for example, to
+report how a build went or to help improve these tools. The send runs as a normal agent
+action that goes through your agent's usual tool approval, and secrets are redacted first. If
+you have given your agent permission to act on your behalf — an auto-approve or full-access
+mode — it may approve the send without prompting you separately, the same as any other action
+you have delegated to it.
+
+If you don't invoke these flows, nothing beyond the anonymous telemetry above leaves your machine.
+
 ## License
 
 MIT License - See LICENSE file for details
