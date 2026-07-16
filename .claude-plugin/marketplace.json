@@ -1,0 +1,15 @@
+{
+  "name": "convex-agent-plugins",
+  "description": "Official Convex plugins for AI coding agents",
+  "owner": {
+    "name": "Convex",
+    "email": "support@convex.dev"
+  },
+  "plugins": [
+    {
+      "name": "convex",
+      "source": "./",
+      "description": "Official Convex plugin for Claude Code - reactive backend development with TypeScript, including agents, skills, MCP integration, and automation hooks"
+    }
+  ]
+}

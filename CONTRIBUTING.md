@@ -168,7 +168,7 @@ Before submitting:
    cp -r . ~/.cursor/plugins/convex
 
    # For Claude Code
-   ln -s $(pwd) ~/.claude/plugins/convex
+   claude --plugin-dir $(pwd)
    ```
 
 2. **Rule Test**

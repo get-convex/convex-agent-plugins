@@ -1,0 +1,21 @@
+{
+  "name": "convex",
+  "version": "1.0.0",
+  "description": "Official Convex plugin for Claude Code - reactive backend development with TypeScript, including agents, skills, MCP integration, and automation hooks",
+  "author": {
+    "name": "Convex",
+    "email": "support@convex.dev"
+  },
+  "homepage": "https://convex.dev",
+  "repository": "https://github.com/get-convex/convex-agent-plugins",
+  "license": "MIT",
+  "keywords": [
+    "convex",
+    "backend",
+    "database",
+    "realtime",
+    "typescript",
+    "reactive",
+    "serverless"
+  ]
+}

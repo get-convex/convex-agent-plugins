@@ -26,6 +26,8 @@ This plugin makes Convex development easier by providing:
 
 ## Installation
 
+### Cursor
+
 Install this plugin via the Cursor Marketplace or manually:
 
 ```bash
@@ -34,6 +36,24 @@ cd ~/.cursor/plugins
 git clone <this-repo-url> convex
 
 # Restart Cursor
+```
+
+### Claude Code
+
+Add this repo as a plugin marketplace, then install the `convex` plugin:
+
+```bash
+claude
+/plugin marketplace add get-convex/convex-agent-plugins
+/plugin install convex@convex-agent-plugins
+```
+
+Skills are namespaced, so invoke them as `/convex:convex-quickstart`, `/convex:schema-builder`, etc.
+
+For local development without installing, load it directly:
+
+```bash
+claude --plugin-dir /path/to/convex-agent-plugins
 ```
 
 ## Components
@@ -67,6 +87,8 @@ The plugin includes 18 rules that provide persistent AI guidance:
 Plus contextual rules for new projects, real-time features, and deployment workflows.
 
 Rules automatically guide the AI when working in your `convex/` directory.
+
+> **Note:** Rules use Cursor's `.mdc` format and currently apply to Cursor only. Claude Code loads this plugin's skills, agents, MCP server, and hooks.
 
 ### Skills (On-Demand Expertise)
 
