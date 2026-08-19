@@ -304,7 +304,9 @@ compiler errors so the agent fixes them before the session is really "done".
 
 ### Hooks Not Running
 
-Make sure hook scripts are executable:
+Hooks run via Node (`node ./scripts/*.mjs`) so they work on Windows, macOS, and Linux. Ensure `node` is on your PATH.
+
+On Unix, legacy `.sh` wrappers delegate to the same `.mjs` entrypoints if you invoke them manually:
 ```bash
 chmod +x scripts/*.sh
 ```

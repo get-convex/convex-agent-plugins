@@ -3,13 +3,13 @@
   "hooks": {
     "beforeShellExecution": [
       {
-        "command": "./scripts/pre-commit-checks.sh",
+        "command": "node ./scripts/pre-commit-checks.mjs",
         "matcher": "\\bgit\\s+commit\\b"
       }
     ],
     "stop": [
       {
-        "command": "./scripts/stop-verify.sh",
+        "command": "node ./scripts/stop-verify.mjs",
         "loop_limit": 2
       }
     ]
